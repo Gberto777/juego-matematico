@@ -8,6 +8,7 @@ React + TypeScript + Vite + TailwindCSS.
 - `npm run build` — compilación de producción
 - `npm run preview` — previsualiza el build
 - `npm run lint` — linter (oxlint)
+- `npm test` — tests (Vitest); `npm run test:watch` en modo observación
 
 ## Estructura
 
