@@ -4,5 +4,7 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Ruta del repositorio en GitHub Pages: https://<usuario>.github.io/juego-matematico/
+  base: '/juego-matematico/',
   plugins: [react(), tailwindcss()],
 })

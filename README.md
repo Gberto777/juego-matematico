@@ -10,9 +10,19 @@ React + TypeScript + Vite + TailwindCSS.
 - `npm run lint` — linter (oxlint)
 - `npm test` — tests (Vitest); `npm run test:watch` en modo observación
 
+## GitHub Pages
+
+`vite.config.ts` usa `base: '/juego-matematico/'`, por lo que en local la app se sirve en http://localhost:5173/juego-matematico/.
+
+```sh
+npm run deploy   # compila (predeploy) y publica dist/ en la rama gh-pages
+```
+
+Requisitos: el repositorio debe llamarse `juego-matematico`, tener configurado el remoto `origin` en GitHub y, en *Settings → Pages*, usar la rama `gh-pages` como origen.
+
 ## Docker
 
-Imagen multi-stage: compila con Node y sirve `dist/` con Nginx (Alpine).
+Imagen multi-stage: compila con Node y sirve `dist/` con Nginx (Alpine). Se compila con `--base=/` para servir la app en la raíz.
 
 ```sh
 docker build -t juego-matematico .
