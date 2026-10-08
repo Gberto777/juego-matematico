@@ -10,6 +10,17 @@ React + TypeScript + Vite + TailwindCSS.
 - `npm run lint` — linter (oxlint)
 - `npm test` — tests (Vitest); `npm run test:watch` en modo observación
 
+## Docker
+
+Imagen multi-stage: compila con Node y sirve `dist/` con Nginx (Alpine).
+
+```sh
+docker build -t juego-matematico .
+docker run --rm -p 8080:80 juego-matematico
+```
+
+La app queda en http://localhost:8080. La configuración de Nginx (`nginx.conf`) redirige cualquier ruta desconocida a `index.html` (enrutamiento SPA).
+
 ## Persistencia
 
 Se guarda en `localStorage`:
