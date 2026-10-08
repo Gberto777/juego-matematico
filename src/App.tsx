@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import GameOverScreen from './components/GameOverScreen'
 import GameScreen from './components/GameScreen'
 import StartScreen from './components/StartScreen'
@@ -8,14 +7,8 @@ type Screen = 'start' | 'game' | 'game-over'
 
 function App() {
   const game = useGameLogic()
-  const [hasStarted, setHasStarted] = useState(false)
 
-  const screen: Screen = !hasStarted ? 'start' : game.isGameOver ? 'game-over' : 'game'
-
-  const startGame = () => {
-    game.resetGame()
-    setHasStarted(true)
-  }
+  const screen: Screen = !game.isActive ? 'start' : game.isGameOver ? 'game-over' : 'game'
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-indigo-500 via-purple-500 to-pink-400 px-4 py-10 font-game">
@@ -30,7 +23,7 @@ function App() {
       </div>
 
       <div className="relative z-10 flex w-full justify-center">
-        {screen === 'start' && <StartScreen onStart={startGame} />}
+        {screen === 'start' && <StartScreen records={game.records} onStart={() => game.startGame()} />}
 
         {screen === 'game' && (
           <GameScreen
@@ -40,6 +33,7 @@ function App() {
             lives={game.lives}
             correctInLevel={game.correctInLevel}
             lastResult={game.lastResult}
+            wasRestored={game.wasRestored}
             onSubmit={game.submitAnswer}
           />
         )}
@@ -50,7 +44,10 @@ function App() {
             level={game.level}
             totalCorrect={game.totalCorrect}
             totalAnswered={game.totalAnswered}
-            onRetry={() => game.resetGame()}
+            highScore={game.records.highScore}
+            isNewHighScore={game.isNewHighScore}
+            onRetry={() => game.startGame()}
+            onMenu={game.goToMenu}
           />
         )}
       </div>

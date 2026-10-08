@@ -10,6 +10,15 @@ React + TypeScript + Vite + TailwindCSS.
 - `npm run lint` — linter (oxlint)
 - `npm test` — tests (Vitest); `npm run test:watch` en modo observación
 
+## Persistencia
+
+Se guarda en `localStorage`:
+
+- `juego-matematico:records:v1`: puntuación máxima y nivel máximo alcanzado.
+- `juego-matematico:partida:v1`: la partida en curso, para retomarla si se recarga la página. Se borra al terminar la partida.
+
+Los datos se validan al leerlos; si están corruptos se ignoran. Si `localStorage` no está disponible, el juego funciona sin guardar.
+
 ## Estructura
 
 ```

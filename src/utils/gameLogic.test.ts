@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   CORRECT_ANSWERS_TO_LEVEL_UP,
+  EMPTY_RECORDS,
   INITIAL_LIVES,
   createInitialState,
   gameReducer,
+  isNewHighScore,
   pointsFor,
   submitAnswer,
+  updateRecords,
   type GameState,
 } from './gameLogic'
 
@@ -125,11 +128,51 @@ describe('submitAnswer', () => {
   })
 })
 
+describe('récords', () => {
+  it('updateRecords solo sube los valores y conserva la referencia si no cambian', () => {
+    const records = { highScore: 50, maxLevel: 2 }
+    expect(updateRecords(records, 30, 1)).toBe(records)
+    expect(updateRecords(records, 80, 1)).toEqual({ highScore: 80, maxLevel: 2 })
+    expect(updateRecords(records, 10, 3)).toEqual({ highScore: 50, maxLevel: 3 })
+  })
+
+  it('empiezan vacíos y se actualizan al responder', () => {
+    let state = createInitialState(6)
+    expect(state.records).toEqual(EMPTY_RECORDS)
+    state = answerCorrectly(state)
+    expect(state.records).toEqual({ highScore: 10, maxLevel: 1 })
+    state = answerWrong(state)
+    expect(state.records).toEqual({ highScore: 10, maxLevel: 1 })
+  })
+
+  it('el nivel máximo cuenta al subir de nivel', () => {
+    const state = repeat(createInitialState(6), CORRECT_ANSWERS_TO_LEVEL_UP, answerCorrectly)
+    expect(state.records.maxLevel).toBe(2)
+  })
+
+  it('no bajan con una partida peor', () => {
+    const state = answerCorrectly(createInitialState(6, 1, { highScore: 500, maxLevel: 4 }))
+    expect(state.records).toEqual({ highScore: 500, maxLevel: 4 })
+    expect(isNewHighScore(state)).toBe(false)
+  })
+
+  it('detecta nuevo récord solo al superar el anterior', () => {
+    let state = createInitialState(6, 1, { highScore: 10, maxLevel: 1 })
+    state = answerCorrectly(state)
+    expect(isNewHighScore(state)).toBe(false) // empata, no supera
+    state = answerCorrectly(state)
+    expect(isNewHighScore(state)).toBe(true)
+  })
+})
+
 describe('gameReducer', () => {
-  it('reset reinicia la partida', () => {
-    let state = repeat(createInitialState(4), INITIAL_LIVES, answerWrong)
+  it('reset reinicia la partida conservando los récords', () => {
+    let state = answerCorrectly(createInitialState(4))
+    state = repeat(state, INITIAL_LIVES, answerWrong)
     state = gameReducer(state, { type: 'reset', seed: 4 })
-    expect(state).toEqual(createInitialState(4))
+    const records = { highScore: 10, maxLevel: 1 }
+    expect(state).toEqual(createInitialState(4, 1, records))
+    expect(state.previousHighScore).toBe(10)
   })
 
   it('reset puede elegir nivel', () => {

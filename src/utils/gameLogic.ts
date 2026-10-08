@@ -17,6 +17,15 @@ export const POINTS_PER_CORRECT_ANSWER = 10
 
 export type GameStatus = 'playing' | 'game-over'
 
+/** Récords históricos que se conservan entre partidas. */
+export interface GameRecords {
+  highScore: number
+  /** 0 si todavía no se ha jugado ninguna partida. */
+  maxLevel: number
+}
+
+export const EMPTY_RECORDS: GameRecords = { highScore: 0, maxLevel: 0 }
+
 export type AnswerResult =
   | { kind: 'correct'; expected: number; given: number; pointsEarned: number; leveledUp: boolean }
   | { kind: 'incorrect'; expected: number; given: number }
@@ -34,13 +43,20 @@ export interface GameState {
   lastResult: AnswerResult | null
   /** Semilla del generador aleatorio; mantiene el reducer puro y reproducible. */
   seed: number
+  records: GameRecords
+  /** Récord que había al empezar la partida, para saber si se ha superado. */
+  previousHighScore: number
 }
 
 export type GameAction =
   | { type: 'submit-answer'; answer: string | number }
   | { type: 'reset'; seed: number; level?: Level }
 
-export function createInitialState(seed: number, level: Level = MIN_LEVEL): GameState {
+export function createInitialState(
+  seed: number,
+  level: Level = MIN_LEVEL,
+  records: GameRecords = EMPTY_RECORDS,
+): GameState {
   if (!isValidLevel(level)) {
     throw new RangeError(`Nivel inválido: ${level}`)
   }
@@ -57,7 +73,24 @@ export function createInitialState(seed: number, level: Level = MIN_LEVEL): Game
     totalAnswered: 0,
     lastResult: null,
     seed: rng.getSeed(),
+    records,
+    previousHighScore: records.highScore,
   }
+}
+
+/** Combina los récords con el resultado actual; devuelve el mismo objeto si no cambian. */
+export function updateRecords(records: GameRecords, score: number, level: number): GameRecords {
+  if (score <= records.highScore && level <= records.maxLevel) {
+    return records
+  }
+  return {
+    highScore: Math.max(records.highScore, score),
+    maxLevel: Math.max(records.maxLevel, level),
+  }
+}
+
+export function isNewHighScore(state: GameState): boolean {
+  return state.score > state.previousHighScore
 }
 
 export function pointsFor(level: Level): number {
@@ -84,11 +117,13 @@ export function submitAnswer(state: GameState, input: string | number): GameStat
     const reachedThreshold = state.correctInLevel + 1 >= CORRECT_ANSWERS_TO_LEVEL_UP
     const leveledUp = reachedThreshold && state.level < MAX_LEVEL
     const level = leveledUp ? ((state.level + 1) as Level) : state.level
+    const score = state.score + pointsEarned
 
     return {
       ...state,
       level,
-      score: state.score + pointsEarned,
+      score,
+      records: updateRecords(state.records, score, level),
       correctInLevel: leveledUp ? 0 : state.correctInLevel + 1,
       totalCorrect: state.totalCorrect + 1,
       totalAnswered,
@@ -106,6 +141,7 @@ export function submitAnswer(state: GameState, input: string | number): GameStat
     lives,
     status,
     totalAnswered,
+    records: updateRecords(state.records, state.score, state.level),
     // Al perder la partida se conserva la última ecuación para poder mostrarla.
     equation:
       status === 'playing' ? generateEquation(state.level, rng.random, state.equation) : state.equation,
@@ -119,6 +155,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'submit-answer':
       return submitAnswer(state, action.answer)
     case 'reset':
-      return createInitialState(action.seed, action.level)
+      // Los récords se conservan al empezar una nueva partida.
+      return createInitialState(action.seed, action.level, state.records)
   }
 }

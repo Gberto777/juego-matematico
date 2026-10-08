@@ -10,6 +10,7 @@ interface GameScreenProps {
   lives: number
   correctInLevel: number
   lastResult: AnswerResult | null
+  wasRestored: boolean
   onSubmit: (answer: string) => void
 }
 
@@ -29,11 +30,18 @@ interface FeedbackProps {
   /** Ecuación a la que se respondió (la pantalla ya muestra la siguiente). */
   answered: Equation | null
   level: Level
+  wasRestored: boolean
 }
 
-function Feedback({ result, answered, level }: FeedbackProps) {
+function Feedback({ result, answered, level, wasRestored }: FeedbackProps) {
   if (!result) {
-    return <p className="text-lg text-indigo-100">Escribe tu respuesta y pulsa Enter ⏎</p>
+    return wasRestored ? (
+      <p className="animate-pop rounded-full bg-white/15 px-5 py-2 text-lg font-semibold text-white ring-1 ring-white/20">
+        💾 ¡Partida recuperada! Sigue donde lo dejaste
+      </p>
+    ) : (
+      <p className="text-lg text-indigo-100">Escribe tu respuesta y pulsa Enter ⏎</p>
+    )
   }
 
   switch (result.kind) {
@@ -56,7 +64,16 @@ function Feedback({ result, answered, level }: FeedbackProps) {
   }
 }
 
-function GameScreen({ equation, level, score, lives, correctInLevel, lastResult, onSubmit }: GameScreenProps) {
+function GameScreen({
+  equation,
+  level,
+  score,
+  lives,
+  correctInLevel,
+  lastResult,
+  wasRestored,
+  onSubmit,
+}: GameScreenProps) {
   const [answer, setAnswer] = useState('')
   // Contador de envíos: sirve como key para relanzar las animaciones aunque el resultado se repita.
   const [submissions, setSubmissions] = useState(0)
@@ -121,7 +138,13 @@ function GameScreen({ equation, level, score, lives, correctInLevel, lastResult,
       </form>
 
       <div className="flex min-h-12 items-center justify-center text-center" role="status">
-        <Feedback key={submissions} result={submissions > 0 ? lastResult : null} answered={answered} level={level} />
+        <Feedback
+          key={submissions}
+          result={submissions > 0 ? lastResult : null}
+          answered={answered}
+          level={level}
+          wasRestored={wasRestored}
+        />
       </div>
     </section>
   )
